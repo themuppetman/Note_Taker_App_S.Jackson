@@ -12,5 +12,15 @@
     "title": "Holy Spicoli",
     "text": "I Got it!",
     "id": "00e84067-d685-4059-8256-b37006c26f41"
+  },
+  {
+    "title": "Error Check",
+    "text": "There's no errors , right?",
+    "id": "5507cd59-30a3-4c30-b360-f1c7dea5bf0f"
+  },
+  {
+    "title": "Dang Extensions",
+    "text": "Console log was showing something referring to a chrome extension",
+    "id": "78eb6993-0ab8-4f52-a17b-4402d2c523fb"
   }
 ]
