@@ -3,7 +3,7 @@ const path = require('path');
 const apiRouter = require('./routes'); // Assuming routes is the directory containing router.js
 
 const app = express();
-const port = 3001;
+const port = process.env.port || 3001;
 
 // Middleware to parse JSON bodies
 app.use(express.json());
