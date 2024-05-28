@@ -1,48 +1,76 @@
-const note = require('express').Router();
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-const {
-  readFromFile,
-  readAndAppend, 
-  writeToFile, 
-} = require('./helpers/fsUtils');
 
-//GET all notes
-note.get ('/', (req, res) => {
-  readfromFile('db/db.json').then((data) => res.json(JSON.parse(data)));
+const router = express.Router();
+const filePath = path.join(__dirname, '../db/notes.json');
+
+// Function to save the note
+function saveNoteToFile(note, file, callback) {
+    fs.readFile(file, 'utf8', (err, data) => {
+        if (err && err.code === 'ENOENT') {
+            data = '[]';
+        } else if (err) {
+            return callback(err);
+        }
+
+        let notes = JSON.parse(data);
+        notes.push(note);
+
+        fs.writeFile(file, JSON.stringify(notes, null, 2), (err) => {
+            if (err) return callback(err);
+            callback(null);
+        });
+    });
+}
+
+// Route to handle getting notes
+router.get('/', (req, res) => {
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).send('Error reading notes.');
+        }
+        res.send(data);
+    });
 });
 
-// GET a note by ID
-note.get('/:id', (req, res) => {
-  const id = req.params.id;
-  readFromFile('db/db.json')
-  then((data) => JSON.parse(data))
-  then((json)) ; {
-    const note = json.find((note) => note.id === id);
-    if (note) {
-      res.json(note);
-    } else {
-      res.status(404).json({ message: 'Note not found' });
+// Route to handle adding a new note
+router.post('/', (req, res) => {
+    const newNote = req.body;
+    newNote.id = uuidv4(); // Assign a unique ID to the note
+
+    if (!newNote.title || !newNote.text) {
+        return res.status(400).send('Note must have a title and text.');
     }
-  };  
+
+    saveNoteToFile(newNote, filePath, (err) => {
+        if (err) {
+            return res.status(500).send('Error saving the note.');
+        }
+        res.status(200).send('Note saved successfully.');
+    });
 });
 
-// Create a new note
-note.post('/', (req, res) => {
-  console.log(req.body);
+// Optional: Route to handle deleting a note (if implemented)
+router.delete('/:id', (req, res) => {
+    const noteId = req.params.id;
 
-  const { title, content } = req.body;
-  
-  if (req.body) {
-    const newNote = {
-      id: uuidv4(),
-      title,
-      content,
-    };
-    readAndAppend('db/db.json', JSON.stringify(newNote));
-    res.json('New note created');
-  } else {
-    res.error('Error creating note');
-  }
+    fs.readFile(filePath, 'utf8', (err, data) => {
+        if (err) {
+            return res.status(500).send('Error reading notes.');
+        }
+
+        let notes = JSON.parse(data);
+        notes = notes.filter(note => note.id !== noteId);
+
+        fs.writeFile(filePath, JSON.stringify(notes, null, 2), (err) => {
+            if (err) {
+                return res.status(500).send('Error deleting the note.');
+            }
+            res.status(200).send('Note deleted successfully.');
+        });
+    });
 });
 
-module.exports = note;
+module.exports = router;
